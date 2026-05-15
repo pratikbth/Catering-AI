@@ -17,7 +17,7 @@ const rootDir = path.resolve(__dirname, "..");
 const assetsDir = path.join(rootDir, "public", "Assets");
 
 app.use(cors({ origin: process.env.CORS_ORIGIN || "*" }));
-app.use(express.json({ limit: process.env.JSON_LIMIT || "30mb" }));
+app.use(express.json({ limit: process.env.JSON_LIMIT || "80mb" }));
 app.use("/assets", express.static(assetsDir));
 
 const templateCatalog = [
@@ -138,6 +138,9 @@ async function generateNanoBananaImage(payload) {
     },
     body: JSON.stringify({
       contents: [{ role: "user", parts }],
+      generationConfig: {
+        responseModalities: ["TEXT", "IMAGE"],
+      },
     }),
   });
 
@@ -172,14 +175,16 @@ async function buildGeminiParts(payload) {
   } = payload;
 
   const context = [
-    "Create an AI wedding food visualization for a premium catering client.",
-    "The venue image is the fixed base scene. Preserve the venue architecture, room layout, walls, flooring, ceiling, windows, lighting direction, camera angle, and perspective. Do not replace, redesign, or move the venue.",
-    "Add realistic catering services into that exact venue as they would look on the main event day: buffet setup, live counters, dessert table, plated food styling, table styling, service decor, and guest-ready presentation.",
-    "Use the catering/design reference image only as inspiration for food presentation, buffet styling, serving counters, table decor, materials, and theme. Do not copy unrelated background or venue details from the reference image.",
+    "You are a premium wedding catering visualization AI. Generate one photorealistic sales preview image.",
+    "TASK: edit the provided venue photo by adding wedding catering services into the same real venue.",
+    "VENUE LOCK RULES: preserve the original venue architecture, room layout, walls, flooring, ceiling, windows, pillars, fixed furniture, lighting direction, camera angle, lens perspective, and scale. Do not change the venue identity. Do not replace the venue with a new hall.",
+    "CATERING ADDITIONS: add a luxurious wedding catering setup that fits naturally in the venue: buffet stations, live counters, dessert table, beverage station, table styling, floral accents, serviceware, menu signage, warm event lighting, and premium guest-ready presentation.",
+    "REFERENCE RULES: use the catering reference image only for food service style, buffet counter design, plating, colors, materials, and decor inspiration. Do not copy the reference background or venue.",
+    "COMPOSITION RULES: keep the result believable, physically placed on the floor/tables, correctly lit, and matched to the venue perspective. Avoid distorted tables, unreadable text, warped people, duplicated food, or fantasy architecture.",
+    "QUALITY: high-end Indian wedding catering, realistic, sharp, elegant, commercial moodboard quality.",
     `Client request: ${prompt}`,
     function_type ? `Theme/atmosphere: ${function_type}` : null,
     space ? `Venue space: ${space}` : null,
-    "Output should be photorealistic, premium, commercially presentable, and useful as a sales preview before production.",
   ]
     .filter(Boolean)
     .join("\n");
@@ -298,6 +303,7 @@ app.post("/api/generate", async (req, res) => {
     const imageData = await generateNanoBananaImage(req.body);
     res.json({ success: true, image_data: imageData });
   } catch (error) {
+    console.error("Image generation failed:", error.message);
     res.status(502).json({ success: false, error: error.message });
   }
 });

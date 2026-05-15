@@ -4,6 +4,16 @@ import axios from "axios";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
+const getGenerationError = (err) => {
+  const status = err.response?.status;
+  const backendMessage = err.response?.data?.error || err.response?.data?.detail;
+  if (backendMessage) return backendMessage;
+  if (status === 413) return "The uploaded images are too large. Try smaller or compressed venue/reference photos.";
+  if (status === 502) return "The AI image service could not complete this request. Try a clearer venue photo or a more specific prompt.";
+  if (err.code === "ERR_NETWORK") return "Cannot reach the backend. Make sure the backend is running on port 8000.";
+  return err.message || "Something went wrong";
+};
+
 // Helper to convert image URL to base64
 const urlToBase64 = async (url) => {
   try {
@@ -136,7 +146,7 @@ export default function Canvas({ filters, referenceImage, venueImage, sessionId,
         setError(res.data.error || "Failed to generate image");
       }
     } catch (err) {
-      setError(err.response?.data?.detail || "Something went wrong");
+      setError(getGenerationError(err));
     } finally {
       setIsGenerating(false);
     }
