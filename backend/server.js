@@ -127,9 +127,24 @@ async function generateNanoBananaImage(payload) {
   }
 
   const model = process.env.NANO_BANANA_MODEL || "gemini-3.1-flash-image-preview";
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
   const parts = await buildGeminiParts(payload);
+  const data = await callGeminiImageModel({ apiKey, model, parts });
+  const imageData = extractGeminiImage(data);
 
+  if (imageData) return imageData;
+
+  const retryParts = buildRetryParts(parts);
+  const retryData = await callGeminiImageModel({ apiKey, model, parts: retryParts });
+  const retryImageData = extractGeminiImage(retryData);
+
+  if (retryImageData) return retryImageData;
+
+  const message = describeGeminiNoImage(retryData) || describeGeminiNoImage(data);
+  throw new Error(message || "Gemini returned no image data. Try clearer venue/reference photos or a more direct catering setup prompt.");
+}
+
+async function callGeminiImageModel({ apiKey, model, parts }) {
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
   const response = await fetch(endpoint, {
     method: "POST",
     headers: {
@@ -150,16 +165,64 @@ async function generateNanoBananaImage(payload) {
     throw new Error(message);
   }
 
-  const responseParts = data?.candidates?.[0]?.content?.parts || [];
-  const imagePart = responseParts.find((part) => part.inlineData?.data || part.inline_data?.data);
-  const imageData = imagePart?.inlineData?.data || imagePart?.inline_data?.data;
+  return data;
+}
 
-  if (!imageData) {
-    const text = responseParts.map((part) => part.text).filter(Boolean).join(" ");
-    throw new Error(text || "Gemini returned no image data.");
+function extractGeminiImage(value) {
+  if (!value || typeof value !== "object") return null;
+  if (typeof value.data === "string" && value.mimeType?.startsWith?.("image/")) return value.data;
+  if (typeof value.data === "string" && value.mime_type?.startsWith?.("image/")) return value.data;
+  if (value.inlineData?.data) return value.inlineData.data;
+  if (value.inline_data?.data) return value.inline_data.data;
+
+  for (const child of Object.values(value)) {
+    if (Array.isArray(child)) {
+      for (const item of child) {
+        const image = extractGeminiImage(item);
+        if (image) return image;
+      }
+    } else if (child && typeof child === "object") {
+      const image = extractGeminiImage(child);
+      if (image) return image;
+    }
   }
 
-  return imageData;
+  return null;
+}
+
+function buildRetryParts(parts) {
+  const imageParts = parts.filter((part) => part.inline_data || part.inlineData);
+  return [
+    {
+      text:
+        "Generate the edited image now. Return an IMAGE output, not an explanation. Keep the first image venue unchanged and add a luxury wedding catering setup inspired by the second image. Preserve camera angle, architecture, perspective, lighting, walls, floor, ceiling, and fixed decor. Add realistic buffet counters, live food stations, dessert table, elegant table styling, serviceware, and premium Indian wedding catering presentation.",
+    },
+    ...imageParts,
+  ];
+}
+
+function describeGeminiNoImage(data) {
+  const candidate = data?.candidates?.[0];
+  const parts = candidate?.content?.parts || [];
+  const text = parts.map((part) => part.text).filter(Boolean).join(" ").trim();
+  const finishReason = candidate?.finishReason;
+  const safety = candidate?.safetyRatings
+    ?.filter((rating) => rating.blocked || rating.probability)
+    ?.map((rating) => `${rating.category}: ${rating.probability}`)
+    ?.join(", ");
+
+  console.warn("Gemini returned no image", {
+    finishReason,
+    text: text.slice(0, 500),
+    safety,
+  });
+
+  if (finishReason === "SAFETY") {
+    return "Gemini did not return an image because the request or uploaded image was blocked by safety filters. Try a different venue/reference image.";
+  }
+  if (text) return `Gemini did not return an image: ${text}`;
+  if (finishReason) return `Gemini did not return an image. Finish reason: ${finishReason}.`;
+  return null;
 }
 
 async function buildGeminiParts(payload) {
