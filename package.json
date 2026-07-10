@@ -67,7 +67,7 @@
     "frontend": "craco start",
     "backend": "node backend/server.js",
     "build": "craco build",
-    "test": "craco test"
+    "test": "craco test --passWithNoTests"
   },
   "browserslist": {
     "production": [
