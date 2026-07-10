@@ -33,7 +33,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: node-app
-          path: .
+          path: |
+            .
+            !node_modules/**
+            !src/**
+            !public/**
+            !build/**
+            !.git/**
 
   deploy:
     runs-on: ubuntu-latest
@@ -62,4 +68,3 @@ jobs:
           app-name: 'catering-ai-api'
           slot-name: 'Production'
           package: .
-          
