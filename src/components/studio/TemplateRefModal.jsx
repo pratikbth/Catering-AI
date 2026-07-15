@@ -2,7 +2,9 @@ import { useState, useEffect } from "react";
 import { X, Check, Loader2 } from "lucide-react";
 import axios from "axios";
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API = process.env.NODE_ENV === "production" && (!process.env.REACT_APP_BACKEND_URL || process.env.REACT_APP_BACKEND_URL.includes("localhost")) 
+  ? "/api" 
+  : `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export default function TemplateRefModal({ onSelect, onClose }) {
   const [templates, setTemplates] = useState([]);

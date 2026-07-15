@@ -2,7 +2,9 @@ import { useState } from "react";
 import { Sparkles, Download, Loader2, ImageIcon, Plus } from "lucide-react";
 import axios from "axios";
 
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API = process.env.NODE_ENV === "production" && (!process.env.REACT_APP_BACKEND_URL || process.env.REACT_APP_BACKEND_URL.includes("localhost")) 
+  ? "/api" 
+  : `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const getGenerationError = (err) => {
   const status = err.response?.status;
@@ -10,7 +12,7 @@ const getGenerationError = (err) => {
   if (backendMessage) return backendMessage;
   if (status === 413) return "The uploaded images are too large. Try smaller or compressed venue/reference photos.";
   if (status === 502) return "The AI image service could not complete this request. Try a clearer venue photo or a more specific prompt.";
-  if (err.code === "ERR_NETWORK") return "Cannot reach the backend. Make sure the backend is running on port 8000.";
+  if (err.code === "ERR_NETWORK") return "Cannot reach the backend. If deployed, check if your REACT_APP_BACKEND_URL is set correctly in your hosting provider.";
   return err.message || "Something went wrong";
 };
 

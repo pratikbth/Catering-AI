@@ -4,7 +4,9 @@ import { ArrowLeft, Download, FileText, Loader2, Presentation } from "lucide-rea
 import axios from "axios";
 
 const BG_IMAGE = "/Assets/ITCBG.jpg";
-const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+const API = process.env.NODE_ENV === "production" && (!process.env.REACT_APP_BACKEND_URL || process.env.REACT_APP_BACKEND_URL.includes("localhost")) 
+  ? "/api" 
+  : `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export default function TemplatesPage() {
   const navigate = useNavigate();

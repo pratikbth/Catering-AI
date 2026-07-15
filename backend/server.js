@@ -477,9 +477,13 @@ app.use((error, _req, res, _next) => {
   res.status(500).json({ detail: "Backend error", error: error.message });
 });
 
-app.listen(port, () => {
-  if (!fs.existsSync(assetsDir)) {
-    console.warn(`Assets directory not found: ${assetsDir}`);
-  }
-  console.log(`Catering.AI backend listening on http://localhost:${port}`);
-});
+if (require.main === module) {
+  app.listen(port, () => {
+    if (!fs.existsSync(assetsDir)) {
+      console.warn(`Assets directory not found: ${assetsDir}`);
+    }
+    console.log(`Catering.AI backend listening on http://localhost:${port}`);
+  });
+}
+
+module.exports = app;
