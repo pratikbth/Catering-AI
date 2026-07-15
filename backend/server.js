@@ -126,7 +126,8 @@ async function generateNanoBananaImage(payload) {
     return buildGeneratedImage(payload);
   }
 
-  const model = process.env.NANO_BANANA_MODEL || "gemini-3.1-flash-image-preview";
+  const rawModel = process.env.NANO_BANANA_MODEL || "gemini-3.1-flash-image-preview";
+  const model = rawModel.trim().replace(/^models\//, "");
   const parts = await buildGeminiParts(payload);
   const data = await callGeminiImageModel({ apiKey, model, parts });
   const imageData = extractGeminiImage(data);
