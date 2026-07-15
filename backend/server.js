@@ -12,7 +12,7 @@ const { PNG } = require("pngjs");
 dotenv.config();
 
 const app = express();
-const port = Number(process.env.PORT || 8000);
+const port = process.env.PORT || 8000;
 const rootDir = path.resolve(__dirname, "..");
 const assetsDir = path.join(rootDir, "public", "Assets");
 
