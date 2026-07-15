@@ -68,3 +68,4 @@ jobs:
           app-name: 'catering-ai-api'
           slot-name: 'Production'
           package: .
+          startup-command: 'npm run backend'

@@ -477,7 +477,7 @@ app.use((error, _req, res, _next) => {
   res.status(500).json({ detail: "Backend error", error: error.message });
 });
 
-if (require.main === module) {
+if (!process.env.VERCEL) {
   app.listen(port, () => {
     if (!fs.existsSync(assetsDir)) {
       console.warn(`Assets directory not found: ${assetsDir}`);
