@@ -3,7 +3,7 @@ import { X, Download, FileText, Presentation, Loader2, Trash2 } from "lucide-rea
 import axios from "axios";
 
 const API = process.env.NODE_ENV === "production" && (!process.env.REACT_APP_BACKEND_URL || process.env.REACT_APP_BACKEND_URL.includes("localhost")) 
-  ? "/api" 
+  ? "https://catering-ai-api-h4a4gfgmfgbxcebp.centralindia-01.azurewebsites.net/api" 
   : `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export default function MoodboardModal({ images, onClose, onRemove }) {
